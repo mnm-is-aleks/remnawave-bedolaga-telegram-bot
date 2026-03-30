@@ -1,33 +1,35 @@
 services:
-  postgres:
-    image: postgres:15-alpine
+  bedolaga-db:
+    image: postgres:17-alpine
+    hostname: bedolaga-db
     restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-remnawave_bot}
-      POSTGRES_USER: ${POSTGRES_USER:-remnawave_user}
+      POSTGRES_DB: ${POSTGRES_DB:-bedolaga_bot}
+      POSTGRES_USER: ${POSTGRES_USER:-bedolaga_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_INITDB_ARGS: '--encoding=UTF8 --locale=C'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - bedolaga-db-data:/var/lib/postgresql/data
     networks:
-      - bot_network
+      - bedolaga-network
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-remnawave_user} -d ${POSTGRES_DB:-remnawave_bot}']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-bedolaga_user} -d ${POSTGRES_DB:-bedolaga_bot}']
       interval: 30s
       timeout: 5s
       retries: 5
       start_period: 30s
 
-  redis:
-    image: redis:7-alpine
+  bedolaga-redis:
+    image: valkey/valkey:8-alpine
+    hostname: bedolaga-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: valkey-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
-      - redis_data:/data
+      - bedolaga-redis-data:/data
     networks:
-      - bot_network
+      - bedolaga-network
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ['CMD', 'valkey-cli', 'ping']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -36,22 +38,22 @@ services:
     build: .
     restart: unless-stopped
     depends_on:
-      postgres:
+      bedolaga-db:
         condition: service_healthy
-      redis:
+      bedolaga-redis:
         condition: service_healthy
     env_file:
       - .env
     environment:
       FORCE_COLOR: '1'
       DOCKER_ENV: 'true'
-      DATABASE_MODE: 'auto'
-      POSTGRES_HOST: 'postgres'
+      DATABASE_MODE: 'postgresql'
+      POSTGRES_HOST: 'bedolaga-db'
       POSTGRES_PORT: '5432'
-      POSTGRES_DB: '${POSTGRES_DB:-remnawave_bot}'
-      POSTGRES_USER: '${POSTGRES_USER:-remnawave_user}'
+      POSTGRES_DB: '${POSTGRES_DB:-bedolaga_bot}'
+      POSTGRES_USER: '${POSTGRES_USER:-bedolaga_user}'
       POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
-      REDIS_URL: 'redis://redis:6379/0'
+      REDIS_URL: 'redis://bedolaga-redis:6379/0'
       TZ: 'Europe/Moscow'
     ports:
       - 8080
@@ -60,18 +62,22 @@ services:
       - bot_data:/app/data
       - bot_uploads:/app/uploads
     networks:
-      - bot_network
+      - bedolaga-network
+      - remnawave-network
       - dokploy-network
 
 volumes:
-  postgres_data:
-  redis_data:
+  bedolaga-db-data:
+  bedolaga-redis-data:
   bot_logs:
   bot_data:
   bot_uploads:
 
 networks:
-  bot_network:
+  bedolaga-network:
     driver: bridge
+  remnawave-network:
+    external: true
+    name: ${REMNAWAVE_NETWORK_NAME}
   dokploy-network:
     external: true
