@@ -76,6 +76,9 @@ volumes:
 networks:
   bedolaga-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
   remnawave-network:
     external: true
     name: ${REMNAWAVE_NETWORK_NAME}
