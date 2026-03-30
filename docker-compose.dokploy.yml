@@ -38,8 +38,6 @@ services:
     build: .
     restart: unless-stopped
     depends_on:
-      bot-init:
-        condition: service_completed_successfully
       bedolaga-db:
         condition: service_healthy
       bedolaga-redis:
