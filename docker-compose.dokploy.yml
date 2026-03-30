@@ -55,7 +55,7 @@ services:
       POSTGRES_PASSWORD: '${POSTGRES_PASSWORD}'
       REDIS_URL: 'redis://bedolaga-redis:6379/0'
       TZ: 'Europe/Moscow'
-    ports:
+    expose:
       - 8080
     volumes:
       - bot_logs:/app/logs
