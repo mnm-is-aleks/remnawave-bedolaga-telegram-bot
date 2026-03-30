@@ -38,6 +38,8 @@ services:
     build: .
     restart: unless-stopped
     depends_on:
+      bot-init:
+        condition: service_completed_successfully
       bedolaga-db:
         condition: service_healthy
       bedolaga-redis:
@@ -58,9 +60,9 @@ services:
     expose:
       - ${WEB_API_PORT:-8090}
     volumes:
-      - bot_logs:/app/logs
-      - bot_data:/app/data
-      - bot_uploads:/app/uploads
+      - ../files/bot-logs:/app/logs
+      - ../files/bot-data:/app/data
+      - ../files/bot-uploads:/app/uploads
     networks:
       - bedolaga-network
       - remnawave-network
@@ -69,9 +71,6 @@ services:
 volumes:
   bedolaga-db-data:
   bedolaga-redis-data:
-  bot_logs:
-  bot_data:
-  bot_uploads:
 
 networks:
   bedolaga-network:
